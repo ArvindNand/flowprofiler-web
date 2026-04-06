@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import streamlit as st
+import io
 
 def calculate_continuous_elapsed_time(df_input, timestamp_col='Timestamp', unit_conversion=1000):
     df = df_input.copy()
@@ -149,6 +150,25 @@ if uploaded_file is not None:
             st.plotly_chart(fig, use_container_width=True)
             
             st.success("Readout generated successfully!")
+            
+            # NEW: Convert figure to HTML and create a download button
+            # We use include_plotlyjs="cdn" so the downloaded file is much smaller 
+            # (it grabs the rendering library from the internet rather than embedding all of it).
+            html_buffer = io.StringIO()
+            fig.write_html(html_buffer, include_plotlyjs="cdn")
+            html_str = html_buffer.getvalue()
+            
+            # Generate a clean filename based on the original upload
+            base_name = uploaded_file.name.split('.')[0]
+            download_filename = f"{base_name}_flowprofiler_readout.html"
+            
+            # Show the download button
+            st.download_button(
+                label="💾 Download Interactive HTML Dashboard",
+                data=html_str,
+                file_name=download_filename,
+                mime="text/html"
+            )
             
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
